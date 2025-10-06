@@ -2,6 +2,12 @@
 #include <string>
 #include <limits>
 #include <iomanip>
+#include <vector>
+#include <fstream>
+#include <cstdlib> 
+#include <ctime>   
+#include <cmath>
+
 using namespace std;
 
 struct ReviewNode {
@@ -9,13 +15,84 @@ struct ReviewNode {
     string comment;
     ReviewNode* next;
 };
-//function prototypes
-void addNodeToHead(ReviewNode*& head, ReviewNode*& tail, double rating, const string& comment);
-void addNodeToTail(ReviewNode*& head, ReviewNode*& tail, double rating, const string& comment);
-void printListAndAverage(ReviewNode* head);
-void cleanup(ReviewNode*& head);
+class Movie {
+private:
+    string title;
+    ReviewNode* head;
+
+    void cleanup() {
+        ReviewNode* current = head;
+        while (current != nullptr) {
+            ReviewNode* nextNode = current->next; 
+            delete current;                       
+            current = nextNode;                   
+        }
+        head = nullptr; // set head to null to indicate the list is empty
+    }
+
+public:
+    // constructor initializes the movie with a title
+    Movie(const string& movieTitle) : title(movieTitle), head(nullptr) {}
+
+    // destructor automatically calls the cleanup function to prevent memory leaks
+    ~Movie() {
+        cleanup();
+    }
+
+    // adds a new review with a randomly generated rating to the head of the list
+    void addReview(const string& comment) {
+        // generate a random rating between 1.0 and 5.0
+        double rating = 1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / (5.0 - 1.0)));
+        rating = floor(rating * 10) / 10; // Round down to one decimal place
+
+        // create the new review node
+        ReviewNode* newNode = new ReviewNode{rating, comment, nullptr};
+        
+        // add the new node to the head of the list
+        if (head != nullptr) {
+            newNode->next = head;
+        }
+        head = newNode;
+    }
+
+    // prints all reviews for the movie and calculates the average rating
+    void printReviews() const {
+        if (head == nullptr) {
+            cout << "\nNo reviews for \"" << title << "\"." << endl;
+            return;
+        }
+
+        cout << "\n--- Reviews for \"" << title << "\" ---" << endl;
+        ReviewNode* current = head;
+        double totalRating = 0.0;
+        int count = 0;
+
+        while (current != nullptr) {
+            count++;
+            cout << "> Rating: " << fixed << setprecision(1) << current->rating
+                 << " | Comment: " << current->comment << endl;
+            totalRating += current->rating;
+            current = current->next;
+        }
+
+        if (count > 0) {
+            double average = totalRating / count;
+            cout << "> Average Rating: " << fixed << setprecision(2) << average << endl;
+        }
+    }
+};
+
+
+
 
 int main() {
+    srand(static_cast<unsigned int>(time(0)));
+
+    // read review comments from an external file into a vector
+    ifstream commentFile("comments.txt");
+    vector<string> comments;
+    string line;
+
     //pointer settings
     ReviewNode* head = nullptr;
     ReviewNode* tail = nullptr;
